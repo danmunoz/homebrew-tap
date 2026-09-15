@@ -7,7 +7,7 @@ cask "cruftless" do
   desc "Find and remove Xcode and CoreSimulator disk bloat"
   homepage "https://github.com/danmunoz/cruftless"
 
-  depends_on macos: ">= :tahoe"
+  depends_on macos: :tahoe
 
   app "Cruftless.app"
 end
