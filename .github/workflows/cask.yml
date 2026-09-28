@@ -1,0 +1,57 @@
+name: Cask
+
+on:
+  pull_request:
+    paths:
+      - Casks/cruftless.rb
+      - .github/workflows/cask.yml
+  push:
+    branches: [main]
+    paths:
+      - Casks/cruftless.rb
+      - .github/workflows/cask.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cask-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Register the checked-out tap
+        run: brew tap danmunoz/tap "$GITHUB_WORKSPACE"
+
+      - name: Trust the checked-out cask
+        run: brew trust --cask danmunoz/tap/cruftless
+
+      - name: Lint the cask
+        run: |
+          brew style --cask danmunoz/tap/cruftless
+          brew audit --strict --online --cask danmunoz/tap/cruftless
+
+      - name: Fetch and validate the released app
+        run: |
+          brew fetch --cask --force danmunoz/tap/cruftless
+          dmg="$(brew --cache --cask cruftless)"
+          mount_dir="$(mktemp -d)"
+          cleanup() {
+            hdiutil detach "$mount_dir" -quiet || true
+            rmdir "$mount_dir" || true
+          }
+          trap cleanup EXIT
+          codesign --verify --strict --verbose=2 "$dmg"
+          xcrun stapler validate "$dmg"
+          spctl --assess --type open --context context:primary-signature --verbose=4 "$dmg"
+          diskutil image attach --mountOptions nobrowse --readOnly --mountPoint "$mount_dir" "$dmg"
+          app="$mount_dir/Cruftless.app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          xcrun stapler validate "$app"
+          spctl --assess --type execute --verbose=4 "$app"
