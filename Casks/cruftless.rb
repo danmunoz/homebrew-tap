@@ -1,6 +1,6 @@
 cask "cruftless" do
-  version "1.2.2"
-  sha256 "9662bc32f553839f13d77b4762c62561efebccf278fc123c6593c6bfa2a31a50"
+  version "1.2.3"
+  sha256 "e57a08f3bc1eaf80065f6a71ccc5e9ea8aab16ff44221c6f5b583002392606bf"
 
   url "https://github.com/danmunoz/cruftless/releases/download/v#{version}/Cruftless-#{version}.dmg"
   name "Cruftless"
